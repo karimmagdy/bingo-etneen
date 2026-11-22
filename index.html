@@ -602,7 +602,7 @@ function resumeHost(code,saved){
 function connect(){
   mode='online';
   setUrl(O.code);
-  if(!window.supabase){ showErr('الأونلاين مش شغال هنا','افتح اللعبة من اللينك ده عشان تلعب أونلاين:',true); return; }
+  if(!window.supabase || /claude/.test(location.hostname)){ showErr('الأونلاين مش شغال هنا','افتح اللعبة من اللينك ده عشان تلعب أونلاين:',true); return; }
   $('wt-title').textContent='بيوصل…'; $('wt-sub').textContent='ثانية واحدة'; show('s-wait');
   sb = sb || window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false}});
   const ch=sb.channel('bingo-'+O.code,{config:{broadcast:{self:false},presence:{key:O.pid}}});

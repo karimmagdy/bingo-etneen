@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>بينجو اتنين</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#f3efe4">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Baloo+Bhaijaan+2:wght@400;600;800&display=swap">
+<style>
+/* Layout: one phone screen, a squared-notebook page; the board is the hero, controls sit under it. Single deliberate "paper" look. */
+:root{
+  --paper:#f3efe4;
+  --grid:#dcd5c2;
+  --ink:#1f2330;
+  --muted:#6f6a5c;
+  --p1:#2448c9;   /* blue pen */
+  --p2:#167a55;   /* green pen */
+  --stamp:#d2412e;/* red marker */
+  --card:#fffdf7;
+  --display:"Lalezar","Baloo Bhaijaan 2",system-ui,sans-serif;
+  --body:"Baloo Bhaijaan 2",system-ui,"Segoe UI",Tahoma,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0;font-family:var(--body);color:var(--ink);font-size:16px;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior:none;
+}
+#app{
+  min-height:100%;max-width:480px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:16px 24px;
+  display:flex;flex-direction:column;
+}
+.screen{display:flex;flex-direction:column;gap:16px;flex:1}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(44px,14vw,64px)}
+h2{font-size:30px}
+p{margin:0;line-height:1.6}
+.muted{color:var(--muted)}
+.p1{color:var(--p1)} .p2{color:var(--p2)}
+
+button{
+  font:inherit;font-weight:800;font-size:18px;border:0;cursor:pointer;
+  border-radius:14px;padding:14px 18px;min-height:52px;
+  background:var(--ink);color:var(--paper);
+  box-shadow:0 3px 0 rgba(0,0,0,.25);
+  transition:transform .08s;
+}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+button:focus-visible,input:focus-visible,.cell:focus-visible{outline:3px solid var(--stamp);outline-offset:2px}
+button.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink);box-shadow:none}
+button.stamp{background:var(--stamp);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>button{flex:1 1 0}
+
+/* home */
+.logo{display:flex;flex-direction:column;gap:4px;padding-top:12px}
+.letters{display:flex;gap:6px;direction:ltr;justify-content:flex-start}
+.letters span{
+  font-family:var(--display);font-size:34px;width:44px;height:48px;display:grid;place-items:center;
+  position:relative;color:var(--ink)
+}
+.letters.big span{font-size:46px;width:54px;height:60px}
+.letters span.x::after{
+  content:"";position:absolute;inset:44% -4px auto;height:5px;border-radius:4px;
+  background:var(--stamp);transform:rotate(-14deg);
+}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:600;font-size:14px;letter-spacing:.02em}
+.field input{
+  font:inherit;font-size:20px;font-weight:600;padding:12px 14px;border-radius:12px;
+  border:2px solid var(--ink);background:var(--card);color:var(--ink);width:100%;
+}
+#name0{color:var(--p1)} #name1{color:var(--p2)}
+.scorebar{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  background:var(--card);border:2px dashed var(--grid);border-radius:14px;padding:10px 14px;
+  font-variant-numeric:tabular-nums;
+}
+.scorebar b{font-family:var(--display);font-size:28px;font-weight:400}
+.rules{background:var(--card);border-radius:14px;padding:14px 16px;border:1px solid var(--grid)}
+.rules ol{margin:6px 0 0;padding-inline-start:20px;line-height:1.7}
+.spacer{flex:1}
+
+/* handoff */
+.handoff{justify-content:center;align-items:center;text-align:center}
+.handoff .who{font-family:var(--display);font-size:clamp(48px,15vw,72px);line-height:1.1}
+.lastcall{
+  font-family:var(--display);font-size:88px;line-height:1;width:150px;height:150px;
+  display:grid;place-items:center;border-radius:50%;border:6px solid var(--stamp);
+  color:var(--stamp);transform:rotate(-6deg);background:var(--card);
+}
+.eye{font-size:15px;max-width:30ch}
+
+/* board */
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.top .turn{font-family:var(--display);font-size:30px;line-height:1.1}
+.opp{font-size:14px;text-align:start;font-variant-numeric:tabular-nums}
+.boardwrap{position:relative;width:100%;max-width:100%;aspect-ratio:1;direction:ltr}
+.board{
+  position:absolute;inset:0;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);
+  gap:6px;padding:8px;background:var(--card);border:3px solid var(--ink);border-radius:16px;
+  box-shadow:4px 5px 0 var(--ink);
+}
+.cell{
+  position:relative;display:grid;place-items:center;border-radius:10px;
+  font-weight:800;font-size:clamp(22px,7.2vw,32px);font-variant-numeric:tabular-nums;
+  background:transparent;border:1.5px solid var(--grid);color:var(--pen,var(--ink));
+  cursor:pointer;user-select:none;padding:0;min-height:0;box-shadow:none;
+}
+.cell:active{transform:none}
+.cell.empty{color:var(--grid);border-style:dashed}
+.cell.called{color:var(--muted)}
+.cell.called::after{
+  content:"";position:absolute;inset:10%;border:4px solid var(--stamp);
+  border-radius:48% 52% 45% 55% / 55% 45% 55% 45%;transform:rotate(-8deg);
+  animation:stampin .28s ease-out;
+}
+.cell.fresh::after{border-width:5px}
+.cell.pending{background:color-mix(in srgb,var(--stamp) 14%,transparent)}
+@keyframes stampin{from{transform:scale(1.6) rotate(-30deg);opacity:0}to{transform:rotate(-8deg);opacity:1}}
+.lines{position:absolute;inset:0;pointer-events:none;padding:8px}
+.lines svg{width:100%;height:100%;overflow:visible}
+.lines line{stroke-width:.13;stroke-linecap:round;opacity:.75;stroke-dasharray:6;stroke-dashoffset:0;animation:draw .5s ease-out}
+@keyframes draw{from{stroke-dashoffset:6}to{stroke-dashoffset:0}}
+.board.locked .cell{cursor:default}
+
+.hist{display:flex;flex-wrap:wrap;gap:6px;direction:ltr;justify-content:flex-end;min-height:30px}
+.hist span{
+  font-weight:800;font-size:14px;min-width:30px;height:30px;padding:0 6px;border-radius:15px;display:grid;place-items:center;
+  background:var(--card);border:1.5px solid var(--grid);font-variant-numeric:tabular-nums;
+}
+.hist span.a{border-color:var(--p1);color:var(--p1)} .hist span.b{border-color:var(--p2);color:var(--p2)}
+.hint{font-size:14px;color:var(--muted);text-align:center}
+
+/* end */
+.result{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.minis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mini{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mini .name{font-weight:800;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini .board{gap:2px;padding:4px;border-width:2px;box-shadow:2px 3px 0 var(--ink);border-radius:10px}
+.mini .cell{font-size:clamp(11px,3.4vw,15px);border-radius:5px;border-width:1px}
+.mini .cell.called::after{border-width:2px}
+.mini .lines{padding:4px}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:5}
+
+/* online */
+.code{
+  font-family:var(--display);font-size:56px;letter-spacing:.12em;direction:ltr;text-align:center;
+  background:var(--card);border:3px solid var(--ink);border-radius:16px;padding:6px 12px;box-shadow:4px 5px 0 var(--ink);
+}
+.linkbox{
+  direction:ltr;font-size:15px;font-weight:600;padding:10px 12px;border-radius:12px;background:var(--card);
+  border:1.5px dashed var(--grid);overflow-wrap:anywhere;user-select:all;text-align:center;
+}
+.status{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--grid);flex:none}
+.dot.on{background:var(--p2)}
+.dot.wait{background:var(--stamp);animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:.3}to{opacity:1}}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--grid)}
+#join-code{direction:ltr;text-align:center;letter-spacing:.2em;text-transform:uppercase;font-family:var(--display);font-size:26px}
+.err{color:var(--stamp);font-weight:600;text-align:center}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div id="app" dir="rtl" lang="ar">
+  <!-- HOME -->
+  <section class="screen" id="s-home">
+    <div class="logo">
+      <div class="letters big" aria-hidden="true"><span>B</span><span class="x">I</span><span>N</span><span class="x">G</span><span>O</span></div>
+      <h1>بينجو اتنين</h1>
+      <p class="muted">لعبة الورقة والقلم، على موبايل واحد أو أونلاين مع صاحبك.</p>
+    </div>
+    <div class="field"><label for="name0">اللاعب الأول</label><input id="name0" maxlength="14" autocomplete="off" placeholder="كريم"></div>
+    <div class="field"><label for="name1">اللاعب التاني</label><input id="name1" maxlength="14" autocomplete="off" placeholder="أحمد"></div>
+    <div class="scorebar" id="scorebar"></div>
+    <details class="rules">
+      <summary><b>إزاي تلعبوا؟</b></summary>
+      <ol>
+        <li>كل واحد يرتّب الأرقام من 1 لـ 25 في جدوله من غير ما التاني يشوف.</li>
+        <li>بالدور، كل واحد يختار رقم من جدوله، والرقم ده يتشطب عند الاتنين.</li>
+        <li>كل صف أو عمود أو قطر يكمل = حرف من BINGO يتشطب.</li>
+        <li>أول واحد يكمّل 5 خطوط يكسب. لو الاتنين كمّلوا في نفس الدور يبقى تعادل.</li>
+      </ol>
+    </details>
+    <div class="spacer"></div>
+    <button class="stamp" id="btn-online">العب أونلاين مع صاحبك</button>
+    <button id="btn-start">العب على نفس الموبايل</button>
+    <button class="ghost" id="btn-reset-score">صفّر النتيجة</button>
+  </section>
+
+  <!-- ONLINE: create or join -->
+  <section class="screen" id="s-online" hidden>
+    <h2>العب أونلاين</h2>
+    <p class="muted">اعمل أوضة وابعت اللينك لصاحبك، وكل واحد يلعب من موبايله.</p>
+    <div class="field"><label for="name-online">اسمك</label><input id="name-online" maxlength="14" autocomplete="off" placeholder="كريم"></div>
+    <button class="stamp" id="btn-create">اعمل أوضة جديدة</button>
+    <div class="or">أو عندك كود؟</div>
+    <div class="field"><label for="join-code">كود الأوضة</label><input id="join-code" maxlength="5" autocomplete="off" placeholder="ABCDE"></div>
+    <button id="btn-join-code">ادخل الأوضة</button>
+    <p class="err" id="online-err" hidden></p>
+    <div class="spacer"></div>
+    <button class="ghost" id="btn-online-back">رجوع</button>
+  </section>
+
+  <!-- ONLINE: invited by link -->
+  <section class="screen handoff" id="s-join" hidden>
+    <p class="muted">صاحبك عازمك على بينجو</p>
+    <div class="code" id="jn-code"></div>
+    <div class="field" style="width:100%"><label for="name-join">اسمك</label><input id="name-join" maxlength="14" autocomplete="off" placeholder="سارة"></div>
+    <button class="stamp" id="btn-join" style="width:100%">ادخل والعب</button>
+    <button class="ghost" id="btn-join-cancel" style="width:100%">لأ، رجوع</button>
+  </section>
+
+  <!-- ONLINE: lobby (host waits) -->
+  <section class="screen" id="s-lobby" hidden>
+    <h2>الأوضة جاهزة</h2>
+    <p class="muted">ابعت اللينك ده لصاحبك. أول ما يفتحه هتبدأوا.</p>
+    <div class="code" id="lb-code"></div>
+    <div class="linkbox" id="lb-link"></div>
+    <div class="row">
+      <button id="btn-copy">انسخ اللينك</button>
+      <button class="ghost" id="btn-wa">ابعته واتساب</button>
+    </div>
+    <button class="ghost" id="btn-share" hidden>شارك…</button>
+    <div class="status"><span class="dot wait" id="lb-dot"></span><span id="lb-status">مستني صاحبك يدخل…</span></div>
+    <div class="spacer"></div>
+    <button class="ghost" id="btn-lobby-leave">إلغاء الأوضة</button>
+  </section>
+
+  <!-- ONLINE: waiting -->
+  <section class="screen handoff" id="s-wait" hidden>
+    <span class="dot wait" style="width:16px;height:16px"></span>
+    <h2 id="wt-title"></h2>
+    <p class="muted" id="wt-sub"></p>
+    <button class="ghost" id="btn-wait-leave">اخرج</button>
+  </section>
+
+  <!-- ONLINE: error -->
+  <section class="screen handoff" id="s-err" hidden>
+    <h2 id="er-title">مش قادر أوصل للأوضة</h2>
+    <p class="muted" id="er-sub"></p>
+    <div class="linkbox" id="er-link" hidden></div>
+    <button class="stamp" id="btn-err-retry">جرّب تاني</button>
+    <button class="ghost" id="btn-err-home">الرئيسية</button>
+  </section>
+
+  <!-- HANDOFF -->
+  <section class="screen handoff" id="s-handoff" hidden>
+    <div id="ho-last" hidden>
+      <p class="muted" id="ho-last-who"></p>
+      <div class="lastcall" id="ho-last-num"></div>
+    </div>
+    <p class="muted">سلّم الموبايل لـ</p>
+    <div class="who" id="ho-who"></div>
+    <p class="eye muted" id="ho-msg"></p>
+    <button class="stamp" id="btn-ready" style="min-width:220px">أنا جاهز، وريني جدولي</button>
+  </section>
+
+  <!-- SETUP -->
+  <section class="screen" id="s-setup" hidden>
+    <div class="top">
+      <div><p class="muted">رتّب جدولك</p><div class="turn" id="su-name"></div></div>
+      <p class="opp muted" id="su-next"></p>
+    </div>
+    <div class="boardwrap"><div class="board" id="su-board"></div></div>
+    <p class="hint">اضغط على أي مربع فاضي عشان تحط فيه الرقم اللي عليه الدور، أو خلّيها عشوائي.</p>
+    <div class="row">
+      <button class="ghost" id="btn-shuffle">عشوائي</button>
+      <button class="ghost" id="btn-fill">كمّل عشوائي</button>
+      <button class="ghost" id="btn-clear">امسح</button>
+    </div>
+    <button class="stamp" id="btn-setup-done" disabled>خلصت</button>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="s-play" hidden>
+    <div class="top">
+      <div><p class="muted">دورك يا</p><div class="turn" id="pl-name"></div></div>
+      <div class="letters" id="pl-letters" aria-label="الخطوط اللي كمّلتها"></div>
+    </div>
+    <div class="boardwrap">
+      <div class="board" id="pl-board"></div>
+      <div class="lines" id="pl-lines"></div>
+    </div>
+    <p class="opp muted" id="pl-opp"></p>
+    <p class="hint" id="pl-hint">اختار رقم مش متشطب.</p>
+    <div class="hist" id="pl-hist" aria-label="الأرقام اللي اتقالت"></div>
+    <div class="spacer"></div>
+    <button class="ghost" id="btn-quit">إنهاء الجولة</button>
+  </section>
+
+  <!-- END -->
+  <section class="screen" id="s-end" hidden>
+    <div class="result">
+      <div class="letters big" aria-hidden="true"><span class="x">B</span><span class="x">I</span><span class="x">N</span><span class="x">G</span><span class="x">O</span></div>
+      <h2 id="en-title"></h2>
+      <p class="muted" id="en-sub"></p>
+    </div>
+    <div class="minis" id="en-minis"></div>
+    <div class="scorebar" id="en-score"></div>
+    <div class="spacer"></div>
+    <button class="stamp" id="btn-again">جولة كمان</button>
+    <button class="ghost" id="btn-home">الرئيسية</button>
+  </section>
+
+  <!-- QUIT CONFIRM (in-page, since confirm() is unavailable) -->
+  <section class="screen handoff" id="s-quit" hidden>
+    <h2>تنهوا الجولة دي؟</h2>
+    <p class="muted">الجولة مش هتتحسب لحد.</p>
+    <div class="row" style="width:100%">
+      <button class="ghost" id="btn-quit-no">لأ، كمّلوا</button>
+      <button class="stamp" id="btn-quit-yes">أيوه، أنهيها</button>
+    </div>
+  </section>
+</div>
+<canvas class="confetti" id="confetti" hidden></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const LETTERS = ['B','I','N','G','O'];
+const LINES = (()=>{const L=[];for(let r=0;r<5;r++)L.push([0,1,2,3,4].map(c=>r*5+c));for(let c=0;c<5;c++)L.push([0,1,2,3,4].map(r=>r*5+c));L.push([0,6,12,18,24]);L.push([4,8,12,16,20]);return L;})();
+const PEN = ['var(--p1)','var(--p2)'];
+
+function load(){try{return JSON.parse(localStorage.getItem('bingo2')||'{}')}catch(e){return {}}}
+function save(){try{localStorage.setItem('bingo2',JSON.stringify({names:S.names,score:S.score}))}catch(e){}}
+
+let S;
+function fresh(prev){
+  const p = prev||{};
+  return {
+    names: p.names||['',''], score: p.score||[0,0,0],
+    phase:'home', boards:[null,null], called:[], callers:[],
+    turn:0, starter:p.starter??0, setupIdx:0, handoff:null, winner:null, fresh:null
+  };
+}
+
+function name(i){return (S.names[i]||'').trim() || (i? 'اللاعب التاني':'اللاعب الأول')}
+function shuffled(){const a=[...Array(25)].map((_,i)=>i+1);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function doneLines(board,calledSet){return LINES.map((l,i)=>l.every(k=>calledSet.has(board[k]))?i:-1).filter(i=>i>=0)}
+
+/* sound: tiny pen "tick" via WebAudio, only after a tap */
+let ac=null;
+function tick(freq=520,dur=.08){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=freq;o.type='triangle';g.gain.setValueAtTime(.15,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+dur);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+dur)}catch(e){}}
+function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
+
+function show(id){for(const s of document.querySelectorAll('.screen'))s.hidden = s.id!==id; window.scrollTo(0,0)}
+
+function lettersHTML(n){return LETTERS.map((L,i)=>`<span class="${i<n?'x':''}">${L}</span>`).join('')}
+function scoreHTML(){
+  return `<span class="p1">${esc(name(0))}</span><b class="p1">${S.score[0]}</b>
+          <span class="muted" style="font-size:13px">تعادل ${S.score[2]}</span>
+          <b class="p2">${S.score[1]}</b><span class="p2">${esc(name(1))}</span>`;
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+function boardCells(el,board,{pen,called,freshNum,onTap,mini}){
+  const set=new Set(called);
+  el.innerHTML='';
+  el.style.setProperty('--pen',pen);
+  board.forEach((n,i)=>{
+    const b=document.createElement(mini?'div':'button');
+    b.className='cell'+(n==null?' empty':'')+(n!=null&&set.has(n)?' called':'')+(n===freshNum?' fresh':'');
+    b.textContent = n==null ? '·' : n;
+    if(!mini){
+      b.type='button';
+      b.setAttribute('aria-label', n==null?'مربع فاضي':(set.has(n)?`${n} متشطب`:`${n}`));
+      if(onTap) b.addEventListener('click',()=>onTap(i,n,b));
+    }
+    el.appendChild(b);
+  });
+}
+function linesSVG(el,board,called,pen){
+  const done=doneLines(board,new Set(called));
+  const seg=i=>{const l=LINES[i];const a=l[0],z=l[4];return [a%5+.5,Math.floor(a/5)+.5,z%5+.5,Math.floor(z/5)+.5]};
+  el.innerHTML=`<svg viewBox="-.15 -.15 5.3 5.3" aria-hidden="true">${done.map(i=>{const[x1,y1,x2,y2]=seg(i);
+    const dx=(x2-x1)*.08,dy=(y2-y1)*.08;
+    return `<line x1="${x1-dx}" y1="${y1-dy}" x2="${x2+dx}" y2="${y2+dy}" style="stroke:${pen}" pathLength="6"/>`}).join('')}</svg>`;
+  return done.length;
+}
+
+/* ---------- screens ---------- */
+function render(){
+  const ph=S.phase;
+  if(ph==='home'){
+    $('name0').value=S.names[0]; $('name1').value=S.names[1];
+    $('scorebar').innerHTML=scoreHTML(); show('s-home');
+  }
+  else if(ph==='handoff'){
+    const h=S.handoff;
+    $('ho-who').textContent=name(h.to); $('ho-who').className='who '+(h.to?'p2':'p1');
+    $('ho-msg').textContent = h.kind==='setup' ? `${name(1-h.to)} ميبصّش على الشاشة وانت بترتّب جدولك.` : `${name(1-h.to)} يدّيك الموبايل ويبص بعيد.`;
+    const last = S.called[S.called.length-1];
+    $('ho-last').hidden = !(h.kind==='play' && last!=null);
+    if(last!=null){$('ho-last-num').textContent=last; $('ho-last-who').textContent=`${name(S.callers[S.callers.length-1])} اختار`}
+    show('s-handoff');
+  }
+  else if(ph==='setup'){
+    drawSetup(S.boards[S.setupIdx], name(S.setupIdx), S.setupIdx);
+  }
+  else if(ph==='play'){
+    const i=S.turn, b=S.boards[i];
+    $('pl-name').textContent=name(i); $('pl-name').className='turn '+(i?'p2':'p1');
+    $('pl-name').previousElementSibling.textContent='دورك يا'; $('btn-quit').textContent='إنهاء الجولة';
+    const mine=linesSVG($('pl-lines'),b,S.called,PEN[i]);
+    $('pl-letters').innerHTML=lettersHTML(mine);
+    const opp=doneLines(S.boards[1-i],new Set(S.called)).length;
+    $('pl-opp').innerHTML=`${esc(name(1-i))} كمّل <b>${opp}</b> من 5 خطوط`;
+    const locked=!!S.lock;
+    $('pl-board').classList.toggle('locked',locked);
+    boardCells($('pl-board'),b,{pen:PEN[i],called:S.called,freshNum:S.fresh,onTap:(k,n,el)=>{
+      if(S.lock||S.called.includes(n)) { if(!S.lock){buzz(30)} return; }
+      call(n);
+    }});
+    $('pl-hist').innerHTML=S.called.map((n,k)=>`<span class="${S.callers[k]?'b':'a'}">${n}</span>`).join('');
+    $('pl-hint').textContent = locked ? 'استنى ثانية…' : 'اختار رقم مش متشطب.';
+    show('s-play');
+  }
+  else if(ph==='end'){
+    const w=S.winner;
+    $('en-title').innerHTML = w===2 ? 'تعادل!' : `<span class="${w?'p2':'p1'}">${esc(name(w))}</span> كسب!`;
+    $('en-sub').textContent = `الجولة خلصت بعد ${S.called.length} رقم.`;
+    const box=$('en-minis'); box.innerHTML='';
+    [0,1].forEach(i=>{
+      const m=document.createElement('div'); m.className='mini';
+      m.innerHTML=`<div class="name ${i?'p2':'p1'}">${esc(name(i))}</div><div class="boardwrap"><div class="board"></div><div class="lines"></div></div>`;
+      box.appendChild(m);
+      boardCells(m.querySelector('.board'),S.boards[i],{pen:PEN[i],called:S.called,mini:true});
+      linesSVG(m.querySelector('.lines'),S.boards[i],S.called,PEN[i]);
+    });
+    $('en-score').innerHTML=scoreHTML();
+    $('btn-again').textContent='جولة كمان'; $('btn-again').disabled=false; $('btn-home').textContent='الرئيسية';
+    show('s-end');
+  }
+}
+
+/* setup screen, shared by local and online play */
+function drawSetup(b, who, seat){
+  $('su-name').textContent=who; $('su-name').className='turn '+(seat?'p2':'p1');
+  const placed=b.filter(x=>x!=null).length;
+  $('su-next').textContent = placed<25 ? `الرقم الجاي: ${placed+1}` : 'الجدول كامل';
+  boardCells($('su-board'),b,{pen:PEN[seat],called:[],onTap:(k,n)=>{
+    if(n!=null) return; b[k]=placed+1; tick(440+placed*12,.05); boardChanged(); rerender();
+  }});
+  $('btn-setup-done').disabled = placed<25;
+  show('s-setup');
+}
+let mode='local';
+function rerender(){ mode==='online' ? renderOnline() : render(); }
+function curSetup(){ return mode==='online' ? O.myBoard : S.boards[S.setupIdx]; }
+function setSetup(b){ if(mode==='online'){O.myBoard=b;} else S.boards[S.setupIdx]=b; boardChanged(); }
+function boardChanged(){ if(mode==='online') store(boardKey(),O.myBoard); }
+
+function call(n){
+  S.called.push(n); S.callers.push(S.turn); S.fresh=n; S.lock=true;
+  tick(660,.09); buzz(20);
+  render();
+  const set=new Set(S.called);
+  const a=doneLines(S.boards[0],set).length>=5, b=doneLines(S.boards[1],set).length>=5;
+  setTimeout(()=>{
+    S.lock=false; S.fresh=null;
+    if(a||b){
+      S.winner = a&&b ? 2 : (a?0:1);
+      S.score[S.winner]++; save();
+      S.phase='end'; render(); celebrate();
+      return;
+    }
+    S.turn=1-S.turn;
+    S.handoff={to:S.turn,kind:'play'}; S.phase='handoff'; render();
+  },900);
+}
+
+function startRound(){
+  S.boards=[Array(25).fill(null),Array(25).fill(null)];
+  S.called=[]; S.callers=[]; S.winner=null; S.setupIdx=0; S.turn=S.starter;
+  S.handoff={to:0,kind:'setup'}; S.phase='handoff'; render();
+}
+
+/* ---------- confetti: red / blue / green pen marks ---------- */
+function celebrate(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c=$('confetti'); c.hidden=false; const x=c.getContext('2d');
+  const W=c.width=innerWidth*devicePixelRatio, H=c.height=innerHeight*devicePixelRatio;
+  c.style.width=innerWidth+'px'; c.style.height=innerHeight+'px';
+  const cols=['#d2412e','#2448c9','#167a55','#1f2330'];
+  const P=[...Array(110)].map(()=>({x:Math.random()*W,y:-Math.random()*H*.5,vy:(2+Math.random()*4)*devicePixelRatio,vx:(Math.random()-.5)*2*devicePixelRatio,r:Math.random()*6,s:(6+Math.random()*10)*devicePixelRatio,c:cols[Math.random()*4|0]}));
+  let t=0;
+  (function f(){
+    x.clearRect(0,0,W,H);
+    P.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.r+=.08;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/6,p.s,p.s/3);x.restore()});
+    if(++t<180) requestAnimationFrame(f); else {x.clearRect(0,0,W,H); c.hidden=true}
+  })();
+  [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tick(f,.18),i*120));
+}
+
+/* ---------- events ---------- */
+$('name0').addEventListener('input',e=>{S.names[0]=e.target.value;save();$('scorebar').innerHTML=scoreHTML()});
+$('name1').addEventListener('input',e=>{S.names[1]=e.target.value;save();$('scorebar').innerHTML=scoreHTML()});
+$('btn-start').onclick=()=>{tick();startRound()};
+$('btn-reset-score').onclick=()=>{S.score=[0,0,0];save();render()};
+$('btn-ready').onclick=()=>{
+  tick(380);
+  const h=S.handoff;
+  if(h.kind==='setup'){S.setupIdx=h.to;S.phase='setup'} else {S.phase='play'}
+  render();
+};
+$('btn-shuffle').onclick=()=>{setSetup(shuffled());tick(500);rerender()};
+$('btn-clear').onclick=()=>{setSetup(Array(25).fill(null));rerender()};
+$('btn-fill').onclick=()=>{
+  const b=curSetup(); let next=b.filter(x=>x!=null).length+1;
+  const empty=b.map((v,i)=>v==null?i:-1).filter(i=>i>=0);
+  for(let i=empty.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[empty[i],empty[j]]=[empty[j],empty[i]]}
+  empty.forEach(i=>b[i]=next++); boardChanged(); tick(500); rerender();
+};
+$('btn-setup-done').onclick=()=>{
+  tick(600);
+  if(mode==='online'){ onlineReady(); return; }
+  if(S.setupIdx===0){S.handoff={to:1,kind:'setup'}}
+  else {S.turn=S.starter; S.handoff={to:S.turn,kind:'play'}}
+  S.phase='handoff'; render();
+};
+$('btn-quit').onclick=()=>show('s-quit');
+$('btn-quit-no').onclick=()=>rerender();
+$('btn-quit-yes').onclick=()=>{ if(mode==='online'){leaveOnline();return;} S.phase='home';render()};
+$('btn-again').onclick=()=>{ if(mode==='online'){onlineAgain();return;} S.starter=1-S.starter;startRound()};
+$('btn-home').onclick=()=>{ if(mode==='online'){leaveOnline();return;} S.phase='home';render()};
+
+/* =====================  ONLINE PLAY  =====================
+   Moves travel over a Supabase Realtime broadcast channel per room ("bingo-CODE").
+   The room creator (host) owns the shared game state and sends it after every change.
+   Each phone keeps its own board to itself until the round ends, and reports only
+   how many lines it has after each call. */
+const SB_URL='https://swgfqxoopbxvnhwqrupd.supabase.co';
+const SB_KEY='sb_publishable_mSn-Hmk-qO7zhb_3mL0BDw_ujem-8TD';
+const WEB_HOME='https://karimmagdy.github.io/bingo-etneen';
+const WEB_URL=(/^https:$/.test(location.protocol) && !window.Capacitor && !/claude|localhost/.test(location.hostname))
+  ? (location.origin+location.pathname).replace(/\/(index\.html)?$/,'') : WEB_HOME;
+let O=null, sb=null, beat=null;
+
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function fetchStore(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
+function myPid(){let p=fetchStore('bingo-pid');if(!p){p=Math.random().toString(36).slice(2,10);store('bingo-pid',p)}return p}
+function newCode(){const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=A[Math.random()*A.length|0];return s}
+function boardKey(){return O?`bingo-board-${O.code}-${O.net?O.net.round:0}`:'x'}
+function roomLink(code){return `${WEB_URL}/?room=${code}`}
+function oname(i){const n=O&&O.net&&O.net.names[i];return (n||'').trim()||(i?'صاحبك':'صاحب الأوضة')}
+function opp(){return 1-O.me}
+function myLines(){return O.myBoard?doneLines(O.myBoard,new Set(O.net.called)).length:0}
+function send(m){try{O&&O.ch&&O.ch.send({type:'broadcast',event:'m',payload:m})}catch(e){}}
+function setUrl(code){try{history.replaceState(null,'',code?`?room=${code}`:location.pathname)}catch(e){}}
+
+function showErr(title,sub,withLink){
+  $('er-title').textContent=title; $('er-sub').textContent=sub||'';
+  $('er-link').hidden=!withLink; $('er-link').textContent=WEB_URL;
+  show('s-err');
+}
+
+function hostCreate(){
+  const me=$('name-online').value.trim(); S.names[0]=me||S.names[0]; save();
+  const code=newCode(), pid=myPid();
+  const net={round:1,phase:'lobby',names:[me,''],hostId:pid,guestId:null,ready:[false,false],
+    called:[],callers:[],turn:0,starter:0,check:0,lines:[0,0],winner:null,score:[0,0,0],boards:[null,null],v:0};
+  O={code,host:true,me:0,pid,net,myBoard:null};
+  store('bingo-room-'+code,{host:true,net});
+  connect();
+}
+function guestJoin(code,nm){
+  if(nm){S.names[0]=nm;save()}
+  O={code,host:false,me:1,pid:myPid(),net:null,myBoard:null,myName:nm||S.names[0]||''};
+  connect();
+}
+function resumeHost(code,saved){
+  O={code,host:true,me:0,pid:myPid(),net:saved.net,myBoard:null};
+  O.myBoard=fetchStore(boardKey());
+  connect();
+}
+
+function connect(){
+  mode='online';
+  setUrl(O.code);
+  if(!window.supabase){ showErr('الأونلاين مش شغال هنا','افتح اللعبة من اللينك ده عشان تلعب أونلاين:',true); return; }
+  $('wt-title').textContent='بيوصل…'; $('wt-sub').textContent='ثانية واحدة'; show('s-wait');
+  sb = sb || window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false}});
+  const ch=sb.channel('bingo-'+O.code,{config:{broadcast:{self:false},presence:{key:O.pid}}});
+  O.ch=ch; O.peers=[]; O.connected=false;
+  ch.on('broadcast',{event:'m'},({payload})=>onMsg(payload||{}));
+  ch.on('presence',{event:'sync'},()=>{ O.peers=Object.keys(ch.presenceState()); onPeers(); });
+  ch.subscribe(async(status)=>{
+    if(!O||O.ch!==ch) return;
+    if(status==='SUBSCRIBED'){
+      O.connected=true;
+      try{await ch.track({at:Date.now()})}catch(e){}
+      if(O.host) pushState(); else hello();
+      renderOnline();
+    } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+      O.connected=false;
+      if(!O.net) showErr('مش قادر أوصل للأوضة','اتأكد إن النت شغال وجرّب تاني.',false);
+      else renderOnline();
+    }
+  });
+  clearInterval(beat); beat=setInterval(heartbeat,2500);
+}
+function hello(){send({t:'hello',pid:O.pid,name:O.myName||''})}
+
+function leaveOnline(){
+  clearInterval(beat);
+  try{O&&O.ch&&sb.removeChannel(O.ch)}catch(e){}
+  O=null; mode='local'; setUrl(null);
+  S.phase='home'; render();
+}
+
+function onPeers(){
+  if(!O||!O.net) return;
+  const oppId = O.host ? O.net.guestId : O.net.hostId;
+  const was=O.oppOnline;
+  O.oppOnline = !!oppId && O.peers.includes(oppId);
+  if(O.host && O.oppOnline && !was) pushState();
+  if(!O.host && O.oppOnline && !was) hello();
+  renderOnline();
+}
+
+/* ---- host side ---- */
+function pushState(){
+  if(!O||!O.host) return;
+  O.net.v++;
+  store('bingo-room-'+O.code,{host:true,net:O.net});
+  send({t:'state',net:O.net});
+  renderOnline();
+}
+function maybeStart(){
+  const n=O.net;
+  if(n.phase==='setup'&&n.ready[0]&&n.ready[1]){
+    Object.assign(n,{phase:'play',turn:n.starter,called:[],callers:[],check:0,lines:[0,0]});
+  }
+}
+function hostCall(num,seat){
+  const n=O.net;
+  if(n.phase!=='play'||n.check||n.turn!==seat||n.called.includes(num)||!(num>=1&&num<=25)) return pushState();
+  n.called.push(num); n.callers.push(seat); n.check=n.called.length;
+  n.lines=[myLines(),null];
+  O.fresh=num; setTimeout(()=>{if(O){O.fresh=null;renderOnline()}},900);
+  tick(660,.09);
+  pushState();
+}
+function resolveCheck(){
+  const n=O.net;
+  if(!n.check||n.lines[1]==null) return;
+  const a=n.lines[0]>=5, b=n.lines[1]>=5;
+  if(a||b){
+    n.winner = a&&b?2:(a?0:1); n.score[n.winner]++;
+    n.phase='end'; n.boards=[O.myBoard,null]; n.check=0;
+    pushState(); celebrate();
+  } else {
+    n.turn=1-n.turn; n.check=0; pushState();
+  }
+}
+function newRound(){
+  const n=O.net;
+  Object.assign(n,{round:n.round+1,phase:'setup',ready:[false,false],called:[],callers:[],check:0,
+    lines:[0,0],winner:null,boards:[null,null],starter:1-n.starter});
+  n.turn=n.starter; O.myBoard=null; O.readySent=false;
+  pushState();
+}
+function hostMsg(m){
+  const n=O.net;
+  if(m.t==='hello'){
+    if(n.guestId && n.guestId!==m.pid){ send({t:'full',pid:m.pid}); return; }
+    n.guestId=m.pid; if(m.name) n.names[1]=m.name;
+    if(n.phase==='lobby') n.phase='setup';
+    O.oppOnline=O.peers.includes(m.pid);
+    return pushState();
+  }
+  if(m.pid!==n.guestId) return;
+  if(m.t==='ready' && m.round===n.round && n.phase==='setup'){ n.ready[1]=true; maybeStart(); return pushState(); }
+  if(m.t==='call') return hostCall(m.n,1);
+  if(m.t==='lines' && m.len===n.check && n.check){ n.lines[1]=m.count; return resolveCheck(); }
+  if(m.t==='board' && m.round===n.round && n.phase==='end'){ n.boards[1]=m.board; return pushState(); }
+  if(m.t==='again' && n.phase==='end') return newRound();
+}
+
+/* ---- guest side ---- */
+function guestMsg(m){
+  if(m.t==='full' && m.pid===O.pid){ clearInterval(beat); showErr('الأوضة مليانة','فيه اتنين بيلعبوا فيها خلاص. اطلب من صاحبك يعمل أوضة جديدة.',false); return; }
+  if(m.t!=='state'||!m.net) return;
+  const net=m.net;
+  if(net.guestId && net.guestId!==O.pid){ clearInterval(beat); showErr('الأوضة مليانة','فيه اتنين بيلعبوا فيها خلاص.',false); return; }
+  const prev=O.net;
+  if(prev && net.v<prev.v && net.round===prev.round) return; // stale
+  if(!prev || prev.round!==net.round){ O.net=net; O.myBoard=fetchStore(boardKey()); O.readySent=!!(net.ready[1]); }
+  const newCall = prev && net.called.length>prev.called.length ? net.called[net.called.length-1] : null;
+  O.net=net;
+  if(O.pending!=null && net.called.includes(O.pending)) O.pending=null;
+  if(newCall!=null){ O.fresh=newCall; tick(660,.09); buzz(20); setTimeout(()=>{if(O){O.fresh=null;renderOnline()}},900); }
+  if(net.phase==='play' && net.check && net.check===net.called.length) send({t:'lines',pid:O.pid,len:net.check,count:myLines()});
+  if(net.phase==='end' && !net.boards[1] && O.myBoard) send({t:'board',pid:O.pid,round:net.round,board:O.myBoard});
+  if(net.phase==='end' && (!prev||prev.phase!=='end')) celebrate();
+  O.oppOnline = O.peers.includes(net.hostId);
+  renderOnline();
+}
+function onMsg(m){ if(!O) return; O.host ? hostMsg(m) : guestMsg(m); }
+
+function heartbeat(){
+  if(!O||!O.connected) return;
+  const n=O.net;
+  if(O.host){
+    if(n.check || (n.phase==='end'&&!n.boards[1]) || (n.phase==='setup'&&!n.ready[1])) send({t:'state',net:n});
+  } else {
+    if(!n){ hello(); return; }
+    if(O.pending!=null && n.phase==='play' && n.turn===1 && !n.called.includes(O.pending)) send({t:'call',pid:O.pid,n:O.pending});
+    if(O.readySent && n.phase==='setup' && !n.ready[1]) send({t:'ready',pid:O.pid,round:n.round});
+    if(n.check && n.check===n.called.length) send({t:'lines',pid:O.pid,len:n.check,count:myLines()});
+  }
+}
+
+/* ---- actions from this phone ---- */
+function onlineReady(){
+  const n=O.net;
+  if(O.host){ n.ready[0]=true; maybeStart(); pushState(); }
+  else { O.readySent=true; send({t:'ready',pid:O.pid,round:n.round}); renderOnline(); }
+}
+function onlineCall(num){
+  const n=O.net;
+  if(n.phase!=='play'||n.turn!==O.me||n.check||O.pending!=null||n.called.includes(num)){ buzz(30); return; }
+  if(O.host) hostCall(num,0);
+  else { O.pending=num; tick(560,.06); send({t:'call',pid:O.pid,n:num}); renderOnline(); }
+}
+function onlineAgain(){ if(O.host) newRound(); else { send({t:'again',pid:O.pid}); $('btn-again').disabled=true; } }
+
+/* ---- drawing ---- */
+function oppStatus(){
+  return O.oppOnline ? `<span class="dot on"></span> ${esc(oname(opp()))} متصل` : `<span class="dot"></span> ${esc(oname(opp()))} مش متصل دلوقتي`;
+}
+function renderOnline(){
+  if(!O||mode!=='online') return;
+  const n=O.net;
+  if(!n){ return; }
+  $('btn-again').disabled=false;
+  if(n.phase==='lobby'){
+    $('lb-code').textContent=O.code; $('lb-link').textContent=roomLink(O.code);
+    $('btn-share').hidden=!navigator.share;
+    show('s-lobby'); return;
+  }
+  if(n.phase==='setup'){
+    if(!O.myBoard){ O.myBoard=Array(25).fill(null); }
+    const done = O.host ? n.ready[0] : O.readySent;
+    if(!done){ drawSetup(O.myBoard, oname(O.me), O.me); $('su-next').innerHTML += ` · ${oppStatus()}`; return; }
+    $('wt-title').textContent=`مستني ${oname(opp())} يرتّب جدوله`;
+    $('wt-sub').innerHTML=oppStatus();
+    show('s-wait'); return;
+  }
+  if(n.phase==='play'){
+    const mine = n.turn===O.me;
+    $('pl-name').textContent=oname(n.turn); $('pl-name').className='turn '+(n.turn?'p2':'p1');
+    $('pl-name').previousElementSibling.textContent = mine ? 'دورك يا' : 'دلوقتي دور';
+    const cnt=linesSVG($('pl-lines'),O.myBoard,n.called,PEN[O.me]);
+    $('pl-letters').innerHTML=lettersHTML(cnt);
+    const oppLines = n.lines[opp()];
+    $('pl-opp').innerHTML=`${oppStatus()}${oppLines!=null?` · كمّل <b>${oppLines}</b> من 5`:''}`;
+    const locked = !mine || !!n.check || O.pending!=null;
+    $('pl-board').classList.toggle('locked',locked);
+    boardCells($('pl-board'),O.myBoard,{pen:PEN[O.me],called:n.called,freshNum:O.fresh,onTap:(k,num)=>onlineCall(num)});
+    if(O.pending!=null){ const c=[...$('pl-board').children][O.myBoard.indexOf(O.pending)]; c&&c.classList.add('pending'); }
+    $('pl-hist').innerHTML=n.called.map((x,k)=>`<span class="${n.callers[k]?'b':'a'}">${x}</span>`).join('');
+    $('pl-hint').textContent = n.check||O.pending!=null ? 'بيتشطب…' : mine ? 'اختار رقم مش متشطب.' : `استنى ${oname(n.turn)} يختار رقم.`;
+    $('btn-quit').textContent='اخرج من الأوضة';
+    show('s-play'); return;
+  }
+  if(n.phase==='end'){
+    const w=n.winner;
+    $('en-title').innerHTML = w===2 ? 'تعادل!' : (w===O.me ? 'انت كسبت!' : `<span class="${w?'p2':'p1'}">${esc(oname(w))}</span> كسب!`);
+    $('en-sub').textContent = `الجولة خلصت بعد ${n.called.length} رقم.`;
+    const box=$('en-minis'); box.innerHTML='';
+    [0,1].forEach(i=>{
+      const b = i===O.me ? O.myBoard : n.boards[i];
+      const m=document.createElement('div'); m.className='mini';
+      m.innerHTML=`<div class="name ${i?'p2':'p1'}">${esc(oname(i))}</div><div class="boardwrap"><div class="board"></div><div class="lines"></div></div>`;
+      box.appendChild(m);
+      if(b){ boardCells(m.querySelector('.board'),b,{pen:PEN[i],called:n.called,mini:true}); linesSVG(m.querySelector('.lines'),b,n.called,PEN[i]); }
+      else m.querySelector('.board').innerHTML='<div class="cell" style="grid-column:1/-1;grid-row:1/-1;border:0">…</div>';
+    });
+    $('en-score').innerHTML=`<span class="p1">${esc(oname(0))}</span><b class="p1">${n.score[0]}</b>
+      <span class="muted" style="font-size:13px">تعادل ${n.score[2]}</span>
+      <b class="p2">${n.score[1]}</b><span class="p2">${esc(oname(1))}</span>`;
+    $('btn-again').textContent = O.host ? 'جولة كمان' : 'اطلب جولة كمان';
+    $('btn-home').textContent='اخرج من الأوضة';
+    show('s-end'); return;
+  }
+}
+
+/* ---- online buttons ---- */
+$('btn-online').onclick=()=>{ tick(); $('name-online').value=S.names[0]||''; $('online-err').hidden=true; show('s-online'); };
+$('btn-online-back').onclick=()=>{ S.phase='home'; render(); };
+$('btn-create').onclick=()=>{ tick(); hostCreate(); };
+$('btn-join-code').onclick=()=>{
+  const code=$('join-code').value.trim().toUpperCase();
+  if(!/^[A-Z0-9]{5}$/.test(code)){ $('online-err').textContent='الكود 5 حروف/أرقام، زي اللي في اللينك.'; $('online-err').hidden=false; return; }
+  tick(); guestJoin(code,$('name-online').value.trim());
+};
+$('btn-join').onclick=()=>{ tick(); guestJoin(O_invite,$('name-join').value.trim()); };
+$('btn-join-cancel').onclick=()=>{ setUrl(null); S.phase='home'; render(); };
+$('btn-copy').onclick=()=>{
+  const t=roomLink(O.code);
+  const done=()=>{ $('btn-copy').textContent='اتنسخ ✓'; setTimeout(()=>$('btn-copy').textContent='انسخ اللينك',1500); };
+  try{ navigator.clipboard.writeText(t).then(done,()=>selectLink()); }catch(e){ selectLink(); }
+};
+function selectLink(){ const r=document.createRange(); r.selectNodeContents($('lb-link')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
+function openOut(url){ if(window.Capacitor){ location.href=url; } else { const w=window.open(url,'_blank'); if(!w) location.href=url; } }
+$('btn-wa').onclick=()=>openOut('https://wa.me/?text='+encodeURIComponent(`تعالى نلعب بينجو 🎲\n${roomLink(O.code)}`));
+$('btn-share').onclick=()=>{ navigator.share({title:'بينجو اتنين',text:'تعالى نلعب بينجو',url:roomLink(O.code)}).catch(()=>{}); };
+$('btn-lobby-leave').onclick=()=>{ try{localStorage.removeItem('bingo-room-'+O.code)}catch(e){} leaveOnline(); };
+$('btn-wait-leave').onclick=()=>leaveOnline();
+$('btn-err-home').onclick=()=>leaveOnline();
+$('btn-err-retry').onclick=()=>{ if(O){ try{sb&&O.ch&&sb.removeChannel(O.ch)}catch(e){} connect(); } else leaveOnline(); };
+
+/* opened from a room link? */
+let O_invite=null;
+function checkInvite(){
+  let code=null;
+  try{ code=new URLSearchParams(location.search).get('room'); }catch(e){}
+  if(!code || !/^[A-Za-z0-9]{5}$/.test(code)) return false;
+  code=code.toUpperCase();
+  const saved=fetchStore('bingo-room-'+code);
+  if(saved&&saved.host){ resumeHost(code,saved); return true; }
+  O_invite=code; $('jn-code').textContent=code; $('name-join').value=S.names[0]||''; show('s-join');
+  return true;
+}
+
+/* keep a running game across live updates of the page */
+window.claude?.hot?.snapshot?.(()=>S);
+function start(data){
+  S = data && data.phase ? data : fresh(load());
+  S.lock=false;
+  if(S.phase!=='home' || !checkInvite()) render();
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? null);
+})();
+</script>
+
+</body>
+</html>
